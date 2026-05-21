@@ -1,7 +1,7 @@
-// components/NoteCard.js - Add random height for masonry effect
+// components/NoteCard.js - With expand/collapse
 'use client'
 
-import { Pin, Archive, Trash2, Edit, Calendar, Tag } from 'lucide-react'
+import { Pin, Archive, Trash2, Edit, Calendar, Tag, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const colorStyles = {
@@ -14,6 +14,24 @@ const colorStyles = {
 
 export default function NoteCard({ note, view, onEdit, onDelete, onArchive, onPin }) {
     const [randomHeight, setRandomHeight] = useState('')
+    const [isExpanded, setIsExpanded] = useState(false)
+    const [truncatedContent, setTruncatedContent] = useState('')
+    const [needsTruncation, setNeedsTruncation] = useState(false)
+
+    // Truncate content to 100 words
+    useEffect(() => {
+        if (note.content) {
+            const words = note.content.split(/\s+/)
+            if (words.length > 100) {
+                const truncated = words.slice(0, 100).join(' ') + '...'
+                setTruncatedContent(truncated)
+                setNeedsTruncation(true)
+            } else {
+                setTruncatedContent(note.content)
+                setNeedsTruncation(false)
+            }
+        }
+    }, [note.content])
 
     useEffect(() => {
         // Random heights for masonry effect (only in grid view)
@@ -22,14 +40,11 @@ export default function NoteCard({ note, view, onEdit, onDelete, onArchive, onPi
             setRandomHeight(heights[Math.floor(Math.random() * heights.length)])
         }
     }, [view])
-    
-    // Grid view with masonry layout
+
     return (
         <div className="break-inside-avoid mb-4">
             <div
-                className={`card group relative bg-white dark:bg-[#111111]
-  rounded-xl border overflow-hidden
-  ${colorStyles[note.color] || colorStyles.purple}`}
+                className={`card group relative bg-white dark:bg-[#111111] rounded-xl border overflow-hidden flex flex-col transition-all duration-200 hover:shadow-lg ${colorStyles[note.color] || colorStyles.purple}`}
             >
                 {/* Pin Indicator */}
                 {note.is_pinned !== 0 && (
@@ -40,19 +55,41 @@ export default function NoteCard({ note, view, onEdit, onDelete, onArchive, onPi
 
                 {/* Color bar at top */}
                 <div className={`h-1 w-full ${note.color === 'purple' ? 'bg-purple-500' :
-                    note.color === 'blue' ? 'bg-blue-500' :
-                        note.color === 'green' ? 'bg-green-500' :
-                            note.color === 'orange' ? 'bg-orange-500' : 'bg-pink-500'
+                        note.color === 'blue' ? 'bg-blue-500' :
+                            note.color === 'green' ? 'bg-green-500' :
+                                note.color === 'orange' ? 'bg-orange-500' : 'bg-pink-500'
                     }`} />
 
-                <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 mb-2">
+                <div className="p-4 flex flex-col flex-1">
+                    {/* Title */}
+                    <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 mb-2 text-base">
                         {note.title}
                     </h3>
 
-                    <p className="text-sm text-gray-600 dark:text-[#888888] leading-relaxed line-clamp-4 mb-3">
-                        {note.content}
-                    </p>
+                    {/* Content - Expandable */}
+                    <div className="flex-1">
+                        <p className="text-sm text-gray-600 dark:text-[#888888] leading-relaxed mb-3 whitespace-pre-wrap">
+                            {isExpanded ? note.content : truncatedContent}
+                        </p>
+                        {needsTruncation && (
+                            <button
+                                onClick={() => setIsExpanded(!isExpanded)}
+                                className="text-xs text-purple-600 dark:text-[#8B5CF6] hover:underline mb-2 inline-flex items-center gap-1"
+                            >
+                                {isExpanded ? (
+                                    <>
+                                        <ChevronUp className="w-3 h-3" />
+                                        Show less
+                                    </>
+                                ) : (
+                                    <>
+                                        <ChevronDown className="w-3 h-3" />
+                                        Read more...
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
 
                     {/* Tags */}
                     {note.tags && note.tags.length > 0 && (
@@ -72,25 +109,41 @@ export default function NoteCard({ note, view, onEdit, onDelete, onArchive, onPi
                     )}
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-[#222222]">
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-[#222222] mt-auto">
                         <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-[#666666]">
                             <Calendar className="w-3 h-3" />
                             {new Date(note.updated_at).toLocaleDateString()}
                         </div>
                         <div className="flex items-center gap-1">
-                            <button onClick={() => onPin(note)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors" title={note.is_pinned ? 'Unpin' : 'Pin'}>
-                                <Pin className="w-3 h-3 text-gray-500 dark:text-[#888888]" />
+                            <button
+                                onClick={() => onPin(note)}
+                                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors"
+                                title={note.is_pinned ? 'Unpin' : 'Pin'}
+                            >
+                                <Pin className={`w-3 h-3 ${note.is_pinned ? 'text-purple-500 fill-purple-500' : 'text-gray-500 dark:text-[#888888]'}`} />
                             </button>
-                            <button onClick={() => onArchive(note)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors" title={note.is_archived ? 'Unarchive' : 'Archive'}>
-                                <Archive className="w-3 h-3 text-gray-500 dark:text-[#888888]" />
+                            <button
+                                onClick={() => onArchive(note)}
+                                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors"
+                                title={note.is_archived ? 'Unarchive' : 'Archive'}
+                            >
+                                <Archive className={`w-3 h-3 ${note.is_archived ? 'text-green-500' : 'text-gray-500 dark:text-[#888888]'}`} />
                             </button>
-                            <button onClick={() => {
-                                onEdit(note)
-                                console.log('Edit note:', note)
-                            }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors" title="Edit">
+                            <button
+                                onClick={() => {
+                                    onEdit(note)
+                                    console.log('Edit note:', note)
+                                }}
+                                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors"
+                                title="Edit"
+                            >
                                 <Edit className="w-3 h-3 text-blue-500" />
                             </button>
-                            <button onClick={() => onDelete(note)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-red-500/10 transition-colors" title="Delete">
+                            <button
+                                onClick={() => onDelete(note)}
+                                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-red-500/10 transition-colors"
+                                title="Delete"
+                            >
                                 <Trash2 className="w-3 h-3 text-red-500" />
                             </button>
                         </div>

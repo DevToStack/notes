@@ -317,7 +317,7 @@ export default function Sidebar({
                         <span className="text-sm font-medium">Settings</span>
                     </button>
 
-                    <div className="mt-4 px-3">
+                    <div className="mt-4">
                         <div className="bg-gray-100 dark:bg-[#1A1A1A] rounded-lg p-3">
                             <div className="flex justify-between text-xs text-gray-500 dark:text-[#888888] mb-1">
                                 <span>Storage</span>
