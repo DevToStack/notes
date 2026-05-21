@@ -1,0 +1,58 @@
+// components/ThemeProvider.js
+'use client'
+
+import { useEffect, useState } from "react";
+
+export function ThemeProvider({ children }) {
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    useEffect(() => {
+        const initializeTheme = () => {
+            const savedTheme = localStorage.getItem("theme");
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+            // Remove any existing theme classes first
+            document.documentElement.classList.remove("dark", "light");
+
+            if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add("dark");
+            } else {
+                document.documentElement.classList.add("light");
+            }
+
+            // Add stable class after theme is set
+            setTimeout(() => {
+                document.documentElement.classList.add("theme-stable");
+            }, 100);
+
+            setIsInitialized(true);
+        };
+
+        initializeTheme();
+
+        // Listen for system theme changes
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        const handleSystemChange = (e) => {
+            // Only apply if user hasn't manually set a preference
+            if (!localStorage.getItem("theme")) {
+                if (e.matches) {
+                    document.documentElement.classList.add("dark");
+                    document.documentElement.classList.remove("light");
+                } else {
+                    document.documentElement.classList.add("light");
+                    document.documentElement.classList.remove("dark");
+                }
+            }
+        };
+
+        mediaQuery.addEventListener("change", handleSystemChange);
+        return () => mediaQuery.removeEventListener("change", handleSystemChange);
+    }, []);
+
+    // Prevent flash of incorrect theme
+    if (!isInitialized) {
+        return null;
+    }
+
+    return children;
+}
