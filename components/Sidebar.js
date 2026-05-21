@@ -29,7 +29,8 @@ export default function Sidebar({
     stats,
     onNewNote,
     isMobileMenuOpen,
-    setIsMobileMenuOpen
+    setIsMobileMenuOpen,
+    onOpenProfile
 }) {
     const [isMobile, setIsMobile] = useState(false)
 
@@ -307,7 +308,7 @@ export default function Sidebar({
                 <div className="p-4 border-t border-gray-200 dark:border-[#222222]">
                     <button
                         onClick={() => {
-                            onViewChange('settings')
+                            onOpenProfile()
                             if (isMobile) setIsMobileMenuOpen(false)
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-[#888888] hover:bg-gray-100 dark:hover:bg-[#1A1A1A] hover:text-gray-900 dark:hover:text-white transition-all duration-200"

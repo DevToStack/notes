@@ -8,6 +8,8 @@ import NoteCard from '@/components/NoteCard'
 import NoteModal from '@/components/NoteModal'
 import DeleteModal from '@/components/DeleteModal'
 import ThemeToggle from '@/components/ThemeToggle'
+import ProfileModal from '@/components/ProfileModal'
+import ProfileDropdown from '@/components/ProfileDropdown'
 
 export default function NotesPage() {
   const [notes, setNotes] = useState([])
@@ -21,11 +23,23 @@ export default function NotesPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState(null)
   const [stats, setStats] = useState({})
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [userData, setUserData] = useState(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    fetchUser().then(user => {
+      if (!user) {
+        window.location.href = '/login'
+      }
+    })
+  }, [])
 
   useEffect(() => {
     fetchNotes()
   }, [activeView, selectedCategory, selectedTag])
+
+
 
   const fetchNotes = async () => {
     try {
@@ -69,6 +83,19 @@ export default function NotesPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchUser = async () => {
+    try {
+      const response = await fetch('/api/auth/me')
+      const data = await response.json()
+      if (data.success) {
+        return data.user
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error)
+    }
+    return null
   }
 
   const calculateStats = (allNotes) => {
@@ -216,6 +243,7 @@ export default function NotesPage() {
         }}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
+        onOpenProfile={() => setShowProfileModal(true)}
       />
 
       {/* Main Content */}
@@ -255,15 +283,22 @@ export default function NotesPage() {
                     className="w-64 pl-10 pr-4 py-2 bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#222222] rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#888888] focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-[#8B5CF6]"
                   />
                 </div>
+                <ProfileDropdown
+                  user={userData}
+                  onOpenSettings={() => {
+                    setShowProfileModal(true)
+                  }}
+                />
               </div>
             </div>
           </div>
+
         </header>
 
         {/* Notes Masonry Grid */}
         <div className="p-6">
           {filteredNotes.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-16 h-[calc(100vh-200px)] flex flex-col items-center justify-center">
               <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 dark:bg-[#111111] rounded-full flex items-center justify-center">
                 <svg className="w-10 h-10 text-gray-400 dark:text-[#888888]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -285,7 +320,11 @@ export default function NotesPage() {
                       <NoteCard
                         key={note.id}
                         note={note}
-                        onEdit={setEditingNote}
+                        onEdit={(note) => {
+                          console.log('Edit note:', note) // Your log will show here
+                          setEditingNote(note)
+                          setShowModal(true) // This opens the modal
+                        }}
                         onDelete={handleDeleteClick}
                         onArchive={handleArchive}
                         onPin={handlePin}
@@ -307,7 +346,11 @@ export default function NotesPage() {
                       <NoteCard
                         key={note.id}
                         note={note}
-                        onEdit={setEditingNote}
+                        onEdit={(note) => {
+                          console.log('Edit note:', note) // Your log will show here
+                          setEditingNote(note)
+                          setShowModal(true) // This opens the modal
+                        }}
                         onDelete={handleDeleteClick}
                         onArchive={handleArchive}
                         onPin={handlePin}
@@ -333,6 +376,19 @@ export default function NotesPage() {
             fetchNotes()
             setShowModal(false)
             setEditingNote(null)
+          }}
+        />
+      )}
+
+      {showProfileModal && (
+        <ProfileModal
+          onClose={() => {
+            setShowProfileModal(false)
+            setActiveView('all') // Reset to all notes view
+          }}
+          onUpdate={() => {
+            fetchUser() // Refresh user data
+            // Optionally refresh notes or other data
           }}
         />
       )}

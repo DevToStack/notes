@@ -84,7 +84,10 @@ export default function NoteCard({ note, view, onEdit, onDelete, onArchive, onPi
                             <button onClick={() => onArchive(note)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors" title={note.is_archived ? 'Unarchive' : 'Archive'}>
                                 <Archive className="w-3 h-3 text-gray-500 dark:text-[#888888]" />
                             </button>
-                            <button onClick={() => onEdit(note)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors" title="Edit">
+                            <button onClick={() => {
+                                onEdit(note)
+                                console.log('Edit note:', note)
+                            }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors" title="Edit">
                                 <Edit className="w-3 h-3 text-blue-500" />
                             </button>
                             <button onClick={() => onDelete(note)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-red-500/10 transition-colors" title="Delete">

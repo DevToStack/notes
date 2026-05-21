@@ -1,15 +1,37 @@
 // app/api/notes/[id]/route.js
 import { NextResponse } from 'next/server'
 import { query } from '@/lib/db'
+import { verifyToken } from '@/lib/auth';
+import { cookies } from 'next/headers';
 
 // GET /api/notes/[id] - Get single note
 export async function GET(request, { params }) {
     try {
+        const parseCookies = await cookies()
+        // Get token from cookies
+        const token = parseCookies.get('token')?.value;
+
+        if (!token) {
+            return NextResponse.json(
+                { error: 'Not authenticated' },
+                { status: 401 }
+            );
+        }
+
+        // Verify token
+        const decoded = verifyToken(token);
+        if (!decoded) {
+            return NextResponse.json(
+                { error: 'Invalid or expired token' },
+                { status: 401 }
+            );
+        }
+
         const { id } = await params
 
         const notes = await query(
-            'SELECT * FROM notes WHERE id = ?',
-            [id]
+            'SELECT * FROM notes WHERE id = ? AND userid = ?',
+            [id, decoded.userId]
         )
 
         if (notes.length === 0) {
@@ -37,6 +59,26 @@ export async function GET(request, { params }) {
 // PUT /api/notes/[id] - Update note
 export async function PUT(request, { params }) {
     try {
+        const parseCookies = await cookies()
+        // Get token from cookies
+        const token = parseCookies.get('token')?.value;
+
+        if (!token) {
+            return NextResponse.json(
+                { error: 'Not authenticated' },
+                { status: 401 }
+            );
+        }
+
+        // Verify token
+        const decoded = verifyToken(token);
+        if (!decoded) {
+            return NextResponse.json(
+                { error: 'Invalid or expired token' },
+                { status: 401 }
+            );
+        }
+
         const { id } = await params
         const body = await request.json()
         const { title, content, category, color, tags, is_pinned, is_archived } = body
@@ -67,6 +109,26 @@ export async function PUT(request, { params }) {
 // DELETE /api/notes/[id] - Delete note
 export async function DELETE(request, { params }) {
     try {
+        const parseCookies = await cookies()
+        // Get token from cookies
+        const token = parseCookies.get('token')?.value;
+
+        if (!token) {
+            return NextResponse.json(
+                { error: 'Not authenticated' },
+                { status: 401 }
+            );
+        }
+
+        // Verify token
+        const decoded = verifyToken(token);
+        if (!decoded) {
+            return NextResponse.json(
+                { error: 'Invalid or expired token' },
+                { status: 401 }
+            );
+        }
+
         const { id } = await params
 
         await query('DELETE FROM notes WHERE id = ?', [id])
